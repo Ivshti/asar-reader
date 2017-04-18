@@ -11,6 +11,7 @@ function asarReader(asarPath, options) {
 	var fd = null
 	var header = null
 	var getFd = thunky(getFreshFd)
+	var fdLocks = 0
 
 	function getFreshFd(cb) {
 		fs.open(asarPath, 'r', function(err, _fd) {
@@ -33,10 +34,24 @@ function asarReader(asarPath, options) {
 		}, options.keepOpenFor)
 	}
 
+	function lockFd() {
+		fdLocks++
+		clearTimeout(fdTimeout)
+	}
+
+	function unlockFd() {
+		fdLocks--
+		if (fdLocks === 0) renewFd() // reset fd expire timeout
+	}
+
 	var readHeader = thunky(function(cb) {
 		getFd(function(err) {
 			if (err) return cb(err)
-			readHeaderFromFd(fd, cb)
+			lockFd()
+			readHeaderFromFd(fd, function(err, header) {
+				unlockFd()
+				cb(err, header)
+			})
 		})
 	})
 
@@ -73,14 +88,16 @@ function asarReader(asarPath, options) {
 		getFd(function(err, fd) {
 			if (err) return cb(err)
 
-			renewFd()
-			
 			readHeader(function(err, header) {
 				if (err) return cb(err)
 
 				var offset = 8 + header.headerSize + parseInt(fileObj.offset)
 				var buf = new Buffer(fileObj.size)
+				
+				lockFd()
 				fs.read(fd, buf, 0, fileObj.size, offset, function(err, bytesRead, buf) {
+					unlockFd()
+
 					if (err) return cb(err)
 					cb(null, buf)
 				})
@@ -90,14 +107,13 @@ function asarReader(asarPath, options) {
 
 	/*
 	// Does not work currently, offset is all wrong for some reason..
+	// also we cannot lock the fd while this is happening
 	this.getReadStream = function(fileObj, cb) {
 		if (! (fileObj && fileObj.size)) return cb(new Error('file object must be passed'))
 
 		getFd(function(err, fd) {
 			if (err) return cb(err)
 			
-			renewFd()
-
 			readHeader(function(err, header) {
 				if (err) return cb(err)
 
