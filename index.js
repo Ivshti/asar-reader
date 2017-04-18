@@ -14,8 +14,7 @@ function asarReader(asarPath, options) {
 
 	function getFreshFd(cb) {
 		fs.open(asarPath, 'r', function(err, _fd) {
-			console.log('open fd')
-
+			// console.log('open fd')
 			fd = _fd
 			cb(err, _fd)
 			renewFd()
@@ -26,11 +25,10 @@ function asarReader(asarPath, options) {
 		if (fdTimeout) clearTimeout(fdTimeout)
 		fdTimeout = setTimeout(function() {
 			fs.close(fd, function(err) {
+				// console.log('closed fd')
 				if (err) return // TODO FIXME XXX
 				fd = null
 				getFd = thunky(getFreshFd)
-
-				console.log('closed fd')
 			})
 		}, options.keepOpenFor)
 	}
@@ -88,6 +86,20 @@ function asarReader(asarPath, options) {
 		})
 	}
 
+	this.getReadStream = function(fileObj, cb) {
+		if (! (fileObj && fileObj.size)) return cb(new Error('file object must be passed'))
+
+		getFd(function(err, fd) {
+			if (err) return cb(err)
+
+			readHeader(function(err, header) {
+				if (err) return cb(err)
+
+				var offset = 8 + header.headerSize + parseInt(fileObj.offset)
+				cb(null, fs.createReadStream(null, { fd: fd, start: offset, end: offset+fileObj.size, autoClose: false }))
+			})
+		})
+	}
 	return this
 }
 
@@ -118,23 +130,4 @@ function readHeaderFromFd(fd, cb) {
 	})
 }
 
-var reader = asarReader('/Users/ivogeorgiev/stremio/dist/final/stremio.asar')
-
-function test() {
-	reader.listFiles(function(err, files) {
-		console.log(files)
-		var file = files['/index.html']
-		reader.readFile(file, function(err, buf) {
-			console.log(buf.toString().length)
-		})
-		reader.getHeader(function(err, header) {
-			console.log(header)
-		})
-	})
-
-}
-test()
-setTimeout(function() { test() }, 250)
-
-setTimeout(function() { test() }, 3000)
 module.exports = asarReader;
