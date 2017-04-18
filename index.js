@@ -5,7 +5,7 @@ var path = require('path')
 
 function asarReader(asarPath, options) {
 	options = options || { }
-	options.keepOpenFor = typeof(options.keepOpenFor) === "number" ? options.keepOpenFor : 500
+	options.keepOpenFor = typeof(options.keepOpenFor) === "number" ? options.keepOpenFor : 1000
 
 	var fdTimeout = null
 	var fd = null
@@ -73,6 +73,8 @@ function asarReader(asarPath, options) {
 		getFd(function(err, fd) {
 			if (err) return cb(err)
 
+			renewFd()
+			
 			readHeader(function(err, header) {
 				if (err) return cb(err)
 
@@ -86,11 +88,15 @@ function asarReader(asarPath, options) {
 		})
 	}
 
+	/*
+	// Does not work currently, offset is all wrong for some reason..
 	this.getReadStream = function(fileObj, cb) {
 		if (! (fileObj && fileObj.size)) return cb(new Error('file object must be passed'))
 
 		getFd(function(err, fd) {
 			if (err) return cb(err)
+			
+			renewFd()
 
 			readHeader(function(err, header) {
 				if (err) return cb(err)
@@ -100,6 +106,8 @@ function asarReader(asarPath, options) {
 			})
 		})
 	}
+	*/
+
 	return this
 }
 
