@@ -1,6 +1,6 @@
 {
   "name": "asar-reader",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Quickly read ASAR files, asynchronously",
   "main": "index.js",
   "repository": "https://github.com/Ivshti/asar-reader",
