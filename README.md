@@ -11,7 +11,9 @@ Quickly read ASAR files, asynchronously
 
 #### ```instance.listFiles(function(err, files) { })```
 
-#### ```instance.readFile(path, function(err, readStream) { })```
+**files** is an object where the key is the path and the value is the object you have to pass to `instance.readFile`
+
+#### ```instance.readFile(fileObj, function(err, readStream) { })```
 
 #### ```instance.getHeader(function(err, header) { })```
 

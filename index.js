@@ -14,10 +14,11 @@ function asarReader(asarPath, options) {
 
 	function getFreshFd(cb) {
 		fs.open(asarPath, 'r', function(err, _fd) {
+			console.log('open fd')
+
 			fd = _fd
 			cb(err, _fd)
 			renewFd()
-			console.log('open fd')
 		})
 	}
 
@@ -25,7 +26,7 @@ function asarReader(asarPath, options) {
 		if (fdTimeout) clearTimeout(fdTimeout)
 		fdTimeout = setTimeout(function() {
 			fs.close(fd, function(err) {
-				if (err) return
+				if (err) return // TODO FIXME XXX
 				fd = null
 				getFd = thunky(getFreshFd)
 
@@ -49,7 +50,7 @@ function asarReader(asarPath, options) {
 		readHeader(function(err, header) {
 			if (err) return cb(err)
 
-			var files = []
+			var files = { }
 			
 			var fillFilesFromHeader = function(p, o) {
 				var k, f, fullPath, results
@@ -58,7 +59,7 @@ function asarReader(asarPath, options) {
 					f = o.files[k]
 					fullPath = p+'/'+k
 					if (f.files) fillFilesFromHeader(fullPath, f) // dir
-					else files.push(fullPath) // file
+					else files[fullPath] = f // file
 				}
 			};
 			fillFilesFromHeader('', header.header);
@@ -67,8 +68,24 @@ function asarReader(asarPath, options) {
 		})
 	}
 
-	this.readFile = function() {
+	// this API could be changed to locate path too, without passing fileObj directly
+	this.readFile = function(fileObj, cb) {
+		if (! (fileObj && fileObj.size)) return cb(new Error('file object must be passed'))
 
+		getFd(function(err, fd) {
+			if (err) return cb(err)
+
+			readHeader(function(err, header) {
+				if (err) return cb(err)
+
+				var offset = 8 + header.headerSize + parseInt(fileObj.offset)
+				var buf = new Buffer(fileObj.size)
+				fs.read(fd, buf, 0, fileObj.size, offset, function(err, bytesRead, buf) {
+					if (err) return cb(err)
+					cb(null, buf)
+				})
+			})
+		})
 	}
 
 	return this
@@ -96,7 +113,7 @@ function readHeaderFromFd(fd, cb) {
 			cb(null, {
 				header: header,
 				headerSize: size
-			});
+			})
 		})
 	})
 }
@@ -106,6 +123,10 @@ var reader = asarReader('/Users/ivogeorgiev/stremio/dist/final/stremio.asar')
 function test() {
 	reader.listFiles(function(err, files) {
 		console.log(files)
+		var file = files['/index.html']
+		reader.readFile(file, function(err, buf) {
+			console.log(buf.toString().length)
+		})
 		reader.getHeader(function(err, header) {
 			console.log(header)
 		})
@@ -113,5 +134,7 @@ function test() {
 
 }
 test()
+setTimeout(function() { test() }, 250)
 
+setTimeout(function() { test() }, 3000)
 module.exports = asarReader;
