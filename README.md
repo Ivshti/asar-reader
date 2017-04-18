@@ -12,3 +12,7 @@ Quickly read ASAR files, asynchronously
 #### ```instance.listFiles(function(err, files) { })```
 
 #### ```instance.readFile(path, function(err, readStream) { })```
+
+#### ```instance.getHeader(function(err, header) { })```
+
+Get raw ASAR header

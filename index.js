@@ -41,6 +41,10 @@ function asarReader(asarPath, options) {
 		})
 	})
 
+	this.getHeader = function(cb) {
+		readHeader(cb)
+	}
+
 	this.listFiles = function(cb) {
 		readHeader(function(err, header) {
 			if (err) return cb(err)
@@ -48,16 +52,14 @@ function asarReader(asarPath, options) {
 			var files = []
 			
 			var fillFilesFromHeader = function(p, o) {
-				var f, fullPath, results;
-				if (!o.files) return;
+				var k, f, fullPath, results
 
-				results = [];
-				for (f in o.files) {
-					fullPath = p+'/'+f;
-					files.push(fullPath);
-					results.push(fillFilesFromHeader(fullPath, o.files[f]));
+				for (k in o.files) {
+					f = o.files[k]
+					fullPath = p+'/'+k
+					if (f.files) fillFilesFromHeader(fullPath, f) // dir
+					else files.push(fullPath) // file
 				}
-				return results;
 			};
 			fillFilesFromHeader('', header.header);
 
@@ -100,8 +102,16 @@ function readHeaderFromFd(fd, cb) {
 }
 
 var reader = asarReader('/Users/ivogeorgiev/stremio/dist/final/stremio.asar')
-reader.listFiles(function(err, files) {
-	console.log(files)
-})
+
+function test() {
+	reader.listFiles(function(err, files) {
+		console.log(files)
+		reader.getHeader(function(err, header) {
+			console.log(header)
+		})
+	})
+
+}
+test()
 
 module.exports = asarReader;
