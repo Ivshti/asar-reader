@@ -23,7 +23,7 @@ function asarReader(asarPath, options) {
 	}
 
 	function renewFd() {
-		if (fdTimeout) clearTimeout(fdTimeout)
+		clearTimeout(fdTimeout)
 		fdTimeout = setTimeout(function() {
 			fs.close(fd, function(err) {
 				// console.log('closed fd')
