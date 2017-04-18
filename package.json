@@ -1,0 +1,12 @@
+{
+  "name": "asar-reader",
+  "version": "1.0.0",
+  "description": "Quickly read ASAR files, asynchronously",
+  "main": "index.js",
+  "repository": "https://github.com/Ivshti/asar-reader",
+  "author": "Ivo Georgiev <ivo@linvo.org>",
+  "license": "MIT",
+  "dependencies": {
+    "chromium-pickle-js": "^0.2.0"
+  }
+}
