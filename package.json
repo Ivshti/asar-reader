@@ -7,6 +7,7 @@
   "author": "Ivo Georgiev <ivo@linvo.org>",
   "license": "MIT",
   "dependencies": {
-    "chromium-pickle-js": "^0.2.0"
+    "chromium-pickle-js": "^0.2.0",
+    "thunky": "^1.0.2"
   }
 }
